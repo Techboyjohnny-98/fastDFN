@@ -19,13 +19,13 @@ x(1) = 0.6 * p.c_s_p_max;
 % Iterate Bisection Algorithm
 for idx = 1:maxiters
 
-    theta_p = x(idx)/p.c_s_p_max;
+    theta_p = x(idx)/p.c_s_p_max;   %From Weihan's paper 563 -> 
     theta_n = (p.n_Li_s-p.epsilon_s_p*p.L_p*p.Area*x(idx))/(p.c_s_n_max*p.epsilon_s_n*p.L_n*p.Area);
 
     OCPn = refPotentialAnode(p,theta_n);
     OCPp = refPotentialCathode(p,theta_p);
 
-    f(idx) = OCPp - OCPn - V;
+    f(idx) = OCPp - OCPn - V;   % Error between model voltage and measured voltage
         
     if(abs(f(idx)) <= tol)
         break;
@@ -42,7 +42,7 @@ for idx = 1:maxiters
 end
 
 % Output conveged csp0
-csp0 = x(idx);
+csp0 = x(idx);  % x is Csp0
 
 %% Use Newton-Raphson to Solve OCP functions
 % 
