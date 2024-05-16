@@ -7,12 +7,12 @@ clc;
 clear;
 tic;
 
-disp('Fast DFN')
-disp('%%%%%%%%')
+%disp('Fast DFN')
+%disp('%%%%%%%%')
 
 %% Electrochemical Model Parameters
 % Load Lithium Cobolt Oxide Params, adopted from DUALFOIL
-run param/params_LCO
+run param/params_LCO.m
 
 
 %% Input charge/discharge Current Data %%
@@ -26,21 +26,25 @@ Delta_cp = cp_low-cp_high;
 p.OneC = min(p.epsilon_s_n*p.L_n*Delta_cn*p.Faraday/3600, p.epsilon_s_p*p.L_p*Delta_cp*p.Faraday/3600);
 
 %%%%%%%%%%%%%%% MANUAL INPUT WITH C-RATE %%%%%%%%%%%%%%%%%%%%%%%%%
-p.delta_t = 1;
-t = 0:p.delta_t:(180);
-I = 5*p.OneC*ones(size(t));
-I(11:40) = 5*p.OneC;
-I((40+91):(40+90+30)) = -5*p.OneC;
-
-I = 5*p.OneC*ones(size(t));
+% p.delta_t = 1;
+% t = 0:p.delta_t:(180);
+% I = 5*p.OneC*ones(size(t));
+% I(11:40) = 5*p.OneC;
+% I((40+91):(40+90+30)) = -5*p.OneC;
+% 
+% I = 5*p.OneC*ones(size(t));
 
 %%%%%%%%%%%%%%% DYNAMIC CHARGE/DISCHARGE CYCLES FROM EXPERIMENTS %%%%%%%%%%%%%%%
-% load('data/UDDS_data_Oct_26_2015_Sample_05sec');
-% 
-% I = -current_exp'/p.Area;
-% t = time_exp';
-% p.delta_t = t(2)-t(1);
-% 
+load('data/UDDS_data_Oct_26_2015_Sample_05sec');
+% I = -current_exp'/0.1;
+I = -current_exp'/p.Area;
+t = time_exp';
+p.delta_t = t(2)-t(1);
+
+
+
+
+%%%%%%
 NT = length(t);
 
 
@@ -71,11 +75,11 @@ Nx = p.Nx - 3;
 Nz = 3*Nnp + Nx;
 
 % Output Discretization params
-disp('Discretization Params');
+%disp('Discretization Params');
 fprintf(1,'No. of FDM nodes in Anode | Separator | Cathode : %1.0f | %1.0f | %1.0f\n',p.Nxn,p.Nxs,p.Nxp);
 fprintf(1,'Order of Pade Approx for Solid Concentration : %1.0f\n',p.PadeOrder);
 fprintf(1,'Time Step : %2.2f sec\n',p.delta_t);
-disp(' ');
+%disp(' ');
 
 c_s_n0 = zeros(p.PadeOrder,1);
 c_s_p0 = zeros(p.PadeOrder,1);
@@ -288,7 +292,7 @@ p.g_z = g_z;
 clear f_x f_z g_x g_z
 
 %% Integrate!
-disp('Simulating DFN Model...');
+%disp('Simulating DFN Model...');
 
 for k = 1:(NT-1)
     
@@ -386,12 +390,12 @@ end
 
 
 %% Outputs
-disp('Simulating Output Vars...');
+%disp('Simulating Output Vars...');
 simTime = toc;
 fprintf(1,'Simulation Time : %3.2f min\n',simTime/60);
-disp('To plots results, run...');
-disp(' plot_dfn')
-disp(' animate_dfn')
+%disp('To plots results, run...');
+%disp(' plot_dfn')
+%disp(' animate_dfn')
 
 
 %% Save Output Data for Plotting
