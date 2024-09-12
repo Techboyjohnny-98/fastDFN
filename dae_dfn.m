@@ -236,6 +236,18 @@ aFRT = (p.alph*p.Faraday)/(p.R*T);
 % Equilibrium Potential, U^{\pm}(c_ss)
 theta_n = c_ss_n / p.c_s_n_max;
 theta_p = c_ss_p / p.c_s_p_max;
+if ~isreal(theta_n)
+    f = NaN;
+    g = NaN;
+    varargout = {1};
+    return 
+end
+if ~isreal(theta_p)
+    f = NaN;
+    g = NaN;
+    varargout = {1};
+    return
+end
 Unref = refPotentialAnode(p, theta_n);
 Upref = refPotentialCathode(p, theta_p);
 

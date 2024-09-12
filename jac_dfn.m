@@ -136,6 +136,18 @@ c_avg_p = y_csp(2,:)';
 % Equilibrium Potential and Gradient wrt bulk concentration
 [Unb,dUnb] = refPotentialAnode(p, c_avg_n / p.c_s_n_max);
 [Upb,dUpb] = refPotentialCathode(p, c_avg_p / p.c_s_p_max);
+% if ~isreal(theta_n)
+%     f = NaN;
+%     g = NaN;
+%     varargout = {1};
+%     return 
+% end
+% if ~isreal(theta_p)
+%     f = NaN;
+%     g = NaN;
+%     varargout = {1};
+%     return
+% end
 
 % Derivatives wrt c_s
 dfTdcsn_int = -(p.a_s_n*p.Faraday * jn .* dUnb) / (p.rho_avg*p.C_p);

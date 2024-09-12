@@ -3,18 +3,55 @@
 %   Energy, Controls, and Applications Lab (eCAL)
 %   University of California, Berkeley
 %   http://ecal.berkeley.edu/
-clc;
-clear;
-tic;
+function [OBJ] = Junran_DFN(Opt_Param)
 
 %disp('Fast DFN')
 %disp('%%%%%%%%')
+tic;
 
 %% Electrochemical Model Parameters
 % Load Lithium Cobolt Oxide Params, adopted from DUALFOIL
-run param/params_LCO.m
+run param/params_Samsung30T.m
+% 
+% modify model parameters from GA.
+p.L_p           = Opt_Param(1);
+p.L_n           = Opt_Param(2);
+p.c_s_p_max     = Opt_Param(3);
+p.c_s_n_max     = Opt_Param(4);
+p.epsilon_s_p   = Opt_Param(5);
+p.epsilon_s_n   = Opt_Param(6);
+p.Area          = Opt_Param(7);
+p.R_s_p         = Opt_Param(8);
+p.R_s_n         = Opt_Param(9);
+p.D_s_p0        = Opt_Param(10);
+p.D_s_n0        = Opt_Param(11);
+p.R_f_n         = Opt_Param(12);
+p.epsilon_e_p   = Opt_Param(13);
+p.epsilon_e_n   = Opt_Param(14);
+p.c_e           = Opt_Param(15);
+p.L_s           = Opt_Param(16);
+p.t_plus        = Opt_Param(17);
+p.n_Li_s = 0.008*(p.c_s_n_max*p.epsilon_s_n*p.L_n*p.Area) ...
+    +p.epsilon_s_p*p.L_p*p.Area*0.915*p.c_s_p_max;
+% make element to caclulate phi_{s} by Saehong Park 
+p.epsilon_f_n = 1-p.epsilon_s_n-p.epsilon_e_n;  % Volume fraction of filler in neg. electrode
+p.epsilon_f_p = 1-p.epsilon_s_p-p.epsilon_e_p;  % Volume fraction of filler in pos. electrode
+epsilon_f_n = p.epsilon_f_n;  % Volume fraction of filler in neg. electrode
+epsilon_f_p = p.epsilon_f_p;  % Volume fraction of filler in pos. electrode
+% Specific interfacial surface area
+p.a_s_n = 3*p.epsilon_s_n / p.R_s_n;  % Negative electrode [m^2/m^3]
+p.a_s_p = 3*p.epsilon_s_p / p.R_s_p;  % Positive electrode [m^2/m^3]
+% Specific interfacial surface area
+p.a_s_n = 3*p.epsilon_s_n / p.R_s_n;  % Negative electrode [m^2/m^3]
+p.a_s_p = 3*p.epsilon_s_p / p.R_s_p;  % Positive electrode [m^2/m^3]
+% Compute cell mass [kg/m^2]
+m_n = p.L_n * (rho_e*p.epsilon_e_n + rho_sn*p.epsilon_s_n + rho_f*epsilon_f_n);
+m_s = p.L_s * (rho_e*p.epsilon_e_n);
+m_p = p.L_p * (rho_e*p.epsilon_e_p + rho_sp*p.epsilon_s_p + rho_f*epsilon_f_p);
+m_cc = rho_ccn*L_ccn + rho_ccp*L_ccp;
 
-
+% Lumped density [kg/m^2]
+p.rho_avg = m_n + m_s + m_p + m_cc;
 %% Input charge/discharge Current Data %%
 % % Current | Positive <=> Discharge, Negative <=> Charge
 
@@ -26,13 +63,13 @@ Delta_cp = cp_low-cp_high;
 p.OneC = min(p.epsilon_s_n*p.L_n*Delta_cn*p.Faraday/3600, p.epsilon_s_p*p.L_p*Delta_cp*p.Faraday/3600);
 
 %%%%%%%%%%%%%%% MANUAL INPUT WITH C-RATE %%%%%%%%%%%%%%%%%%%%%%%%%
-p.delta_t = 1;
-t = 0:p.delta_t:(180);
-I = 5*p.OneC*ones(size(t));
-I(11:40) = 5*p.OneC;
-I((40+91):(40+90+30)) = -5*p.OneC;
-
-I = 5*p.OneC*ones(size(t));
+% p.delta_t = 1;
+% t = 0:p.delta_t:(180);
+% I = 5*p.OneC*ones(size(t));
+% I(11:40) = 5*p.OneC;
+% I((40+91):(40+90+30)) = -5*p.OneC;
+% 
+% I = 5*p.OneC*ones(size(t));
 
 %%%%%%%%%%%%%%% DYNAMIC CHARGE/DISCHARGE CYCLES FROM EXPERIMENTS %%%%%%%%%%%%%%%
 % load('data/UDDS_data_Oct_26_2015_Sample_05sec');
@@ -40,6 +77,66 @@ I = 5*p.OneC*ones(size(t));
 % I = -current_exp'/p.Area;
 % t = time_exp';
 % p.delta_t = t(2)-t(1);
+%%%%%%%%%%%%%% Samsung 30T%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% load('data/Samsung30T_1C_disch.mat');
+% volt_exp = meas.Voltage(:,1);
+% time_exp = meas.Time(:,1);
+% current_exp = meas.Current(:,1);
+% temp_exp = meas.Battery_temp_DegC(:,1);
+% I = -current_exp'/p.Area;
+% t = time_exp';
+% p.delta_t = t(2)-t(1);
+% V0 = 4.1552;
+%% HWFET (training)
+load('data/Samsung30T_driveCycle.mat');
+volt_exp = meas.Voltage(12500:17641,1);
+time_exp = meas.Time(12500:17641,1);
+current_exp = meas.Current(12500:17641,1);
+temp_exp = meas.Battery_temp_DegC(12500:17641,1);
+I = -current_exp'/p.Area;
+t = time_exp';
+p.delta_t = t(2)-t(1);
+V0 = volt_exp(1);
+%% HWFET
+% load('data/Samsung30T_driveCycle.mat');
+% volt_exp = meas.Voltage(14767:17641,1);
+% time_exp = meas.Time(14767:17641,1);
+% current_exp = meas.Current(14767:17641,1);
+% temp_exp = meas.Battery_temp_DegC(14767:17641,1);
+% I = -current_exp'/p.Area;
+% t = time_exp';
+% p.delta_t = t(2)-t(1);
+% V0 = volt_exp(1);
+%% UDDS
+% load('data/Samsung30T_driveCycle.mat');
+% volt_exp = meas.Voltage(3554:12279,1);
+% time_exp = meas.Time(3554:12279,1);
+% current_exp = meas.Current(3554:12279,1);
+% temp_exp = meas.Battery_temp_DegC(3554:12279,1);
+% I = -current_exp'/p.Area;
+% t = time_exp';
+% p.delta_t = t(2)-t(1);
+% V0 = volt_exp(1);
+%% LA92
+% load('data/Samsung30T_driveCycle.mat');
+% volt_exp = meas.Voltage(20224:25427,1);
+% time_exp = meas.Time(20224:25427,1);
+% current_exp = meas.Current(20224:25427,1);
+% temp_exp = meas.Battery_temp_DegC(20224:25427,1);
+% I = -current_exp'/p.Area;
+% t = time_exp';
+% p.delta_t = t(2)-t(1);
+% V0 = volt_exp(1);
+%% US06
+load('data/Samsung30T_driveCycle.mat');
+volt_exp = meas.Voltage(27802:29693,1);
+time_exp = meas.Time(27802:29693,1);
+current_exp = meas.Current(27802:29693,1);
+temp_exp = meas.Battery_temp_DegC(27802:29693,1);
+I = -current_exp'/p.Area;
+t = time_exp';
+p.delta_t = t(2)-t(1);
+V0 = volt_exp(1);
 
 
 
@@ -50,7 +147,7 @@ NT = length(t);
 
 %% Initial Conditions & Preallocation
 % Solid concentration
-V0 = 3.8; %volt_exp(1);
+% V0 = 3.8; %volt_exp(1);
 % V0 = volt_exp(1);
 [csn0,csp0] = init_cs(p,V0);
 
@@ -76,9 +173,9 @@ Nz = 3*Nnp + Nx;
 
 % Output Discretization params
 %disp('Discretization Params');
-fprintf(1,'No. of FDM nodes in Anode | Separator | Cathode : %1.0f | %1.0f | %1.0f\n',p.Nxn,p.Nxs,p.Nxp);
-fprintf(1,'Order of Pade Approx for Solid Concentration : %1.0f\n',p.PadeOrder);
-fprintf(1,'Time Step : %2.2f sec\n',p.delta_t);
+%fprintf(1,'No. of FDM nodes in Anode | Separator | Cathode : %1.0f | %1.0f | %1.0f\n',p.Nxn,p.Nxs,p.Nxp);
+%fprintf(1,'Order of Pade Approx for Solid Concentration : %1.0f\n',p.PadeOrder);
+%fprintf(1,'Time Step : %2.2f sec\n',p.delta_t);
 %disp(' ');
 
 c_s_n0 = zeros(p.PadeOrder,1);
@@ -292,7 +389,7 @@ p.g_z = g_z;
 clear f_x f_z g_x g_z
 
 %% Integrate!
-disp('Simulating DFN Model...');
+%disp('Simulating DFN Model...');
 
 for k = 1:(NT-1)
     
@@ -343,8 +440,12 @@ for k = 1:(NT-1)
 %     newtonStats.condJac(k+1) = stats.condJac;
     
     % Output data
-    [~, ~, y] = dae_dfn(x(:,k+1),z(:,k+1),I(k+1),p);
-    
+    [f, ~, y] = dae_dfn(x(:,k+1),z(:,k+1),I(k+1),p);
+    if isnan(f)
+        OBJ = 10000000;
+        disp(OBJ);
+        return
+    end
     c_ss_n(:,k+1) = y(1:Nn);
     c_ss_p(:,k+1) = y(Nn+1:Nnp);
     
@@ -369,19 +470,19 @@ for k = 1:(NT-1)
     eta_s_p = phi_s_p - phi_e(end-Np+1:end, :);
   
 %   Commented by SHP.  
-   fprintf(1,'Time : %3.2f sec | C-rate : %2.2f | Temp : %2.1fdegC | SOC : %1.3f | Voltage : %2.3fV | Newton Iters : %2.0f\n',...
-       t(k),I(k+1)/p.OneC,T(k+1)-273.15,SOC(k+1),Volt(k+1),stats.iters);
+   %fprintf(1,'Time : %3.2f sec | C-rate : %2.2f | Temp : %2.1fdegC | SOC : %1.3f | Voltage : %2.3fV | Newton Iters : %2.0f\n',...
+%        t(k),I(k+1)/p.OneC,T(k+1)-273.15,SOC(k+1),Volt(k+1),stats.iters);
     
     if(Volt(k+1) < p.volt_min)
-        fprintf(1,'Min Voltage of %1.1fV exceeded\n',p.volt_min);
+        %fprintf(1,'Min Voltage of %1.1fV exceeded\n',p.volt_min);
         beep;
         %break;
     elseif(Volt(k+1) > p.volt_max)
-        fprintf(1,'Max Voltage of %1.1fV exceeded\n',p.volt_max);
+        %fprintf(1,'Max Voltage of %1.1fV exceeded\n',p.volt_max);
         beep;
-        break;
+%         break;
     elseif(any(c_ex(:,k) < 1))
-        fprintf(1,'c_e depleted below 1 mol/m^3\n');
+        %fprintf(1,'c_e depleted below 1 mol/m^3\n');
         beep;
         %break;
     end
@@ -390,9 +491,9 @@ end
 
 
 %% Outputs
-disp('Simulating Output Vars...');
+%disp('Simulating Output Vars...');
 simTime = toc;
-fprintf(1,'Simulation Time : %3.2f min\n',simTime/60);
+%fprintf(1,'Simulation Time : %3.2f min\n',simTime/60);
 %disp('To plots results, run...');
 %disp(' plot_dfn')
 %disp(' animate_dfn')
@@ -429,5 +530,9 @@ out.simtime=simTime;
 
 % save('data/sensitivity/0C_dfn.mat', 'out');
 
-
+error = volt_exp - Volt;
+OBJ = sqrt(mean(error.^2));  %RMSE
+disp(OBJ)
+% toc
+end
 
