@@ -1,24 +1,20 @@
 %% Doyle-Fuller-Newman Model
 %   Published June 14, 2016 by Professor Scott Moura
-%   Energy, Controls, and Applications Lab (eCAL)
-%   University of California, Berkeley
-%   http://ecal.berkeley.edu/
+%   Modified by Junran Chen, June 15, 2024
 clc;
 clear;
 tic;
 
-disp('Fast DFN')
-disp('%%%%%%%%')
-
 %% Electrochemical Model Parameters
 % Load Lithium Cobolt Oxide Params, adopted from DUALFOIL
-run param/params_LCO
+run param/params_LCO.m  % you can use parameters from your own here. 
 
 
 %% Input charge/discharge Current Data %%
 % % Current | Positive <=> Discharge, Negative <=> Charge
 
 % Calculate C-rate in terms of [A/m^2] using low/high voltage cutoffs
+% Calculate Battery capacity (Ah)
 [cn_low,cp_low] = init_cs(p,p.volt_min);
 [cn_high,cp_high] = init_cs(p,p.volt_max);
 Delta_cn = cn_high-cn_low;
@@ -26,27 +22,36 @@ Delta_cp = cp_low-cp_high;
 p.OneC = min(p.epsilon_s_n*p.L_n*Delta_cn*p.Faraday/3600, p.epsilon_s_p*p.L_p*Delta_cp*p.Faraday/3600);
 
 %%%%%%%%%%%%%%% MANUAL INPUT WITH C-RATE %%%%%%%%%%%%%%%%%%%%%%%%%
+% 180-second 5C-rate constatn current discharge
+% p.delta_t = 1;
+% t = 0:p.delta_t:(180);
+% I = 5*p.OneC*ones(size(t));
+% I(11:40) = 5*p.OneC;
+% I((40+91):(40+90+30)) = -5*p.OneC;
+% 
+% I = 5*p.OneC*ones(size(t));
 p.delta_t = 1;
-t = 0:p.delta_t:(180);
-I = 5*p.OneC*ones(size(t));
-I(11:40) = 5*p.OneC;
-I((40+91):(40+90+30)) = -5*p.OneC;
-
-I = 5*p.OneC*ones(size(t));
+t = 0:p.delta_t:(300);
+I = 5*p.OneC*ones(1, 180);
+I = [I, zeros(1,121)]
 
 %%%%%%%%%%%%%%% DYNAMIC CHARGE/DISCHARGE CYCLES FROM EXPERIMENTS %%%%%%%%%%%%%%%
 % load('data/UDDS_data_Oct_26_2015_Sample_05sec');
-% 
+% % I = -current_exp'/0.1;
 % I = -current_exp'/p.Area;
 % t = time_exp';
 % p.delta_t = t(2)-t(1);
-% 
+
+
+
+
+%%%%%%
 NT = length(t);
 
 
 %% Initial Conditions & Preallocation
 % Solid concentration
-V0 = 3.8; %volt_exp(1);
+V0 = 4.2; %volt_exp(1);
 % V0 = volt_exp(1);
 [csn0,csp0] = init_cs(p,V0);
 
@@ -71,11 +76,11 @@ Nx = p.Nx - 3;
 Nz = 3*Nnp + Nx;
 
 % Output Discretization params
-disp('Discretization Params');
+%disp('Discretization Params');
 fprintf(1,'No. of FDM nodes in Anode | Separator | Cathode : %1.0f | %1.0f | %1.0f\n',p.Nxn,p.Nxs,p.Nxp);
 fprintf(1,'Order of Pade Approx for Solid Concentration : %1.0f\n',p.PadeOrder);
 fprintf(1,'Time Step : %2.2f sec\n',p.delta_t);
-disp(' ');
+%disp(' ');
 
 c_s_n0 = zeros(p.PadeOrder,1);
 c_s_p0 = zeros(p.PadeOrder,1);
@@ -389,9 +394,9 @@ end
 disp('Simulating Output Vars...');
 simTime = toc;
 fprintf(1,'Simulation Time : %3.2f min\n',simTime/60);
-disp('To plots results, run...');
-disp(' plot_dfn')
-disp(' animate_dfn')
+%disp('To plots results, run...');
+%disp(' plot_dfn')
+%disp(' animate_dfn')
 
 
 %% Save Output Data for Plotting
