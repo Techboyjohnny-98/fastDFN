@@ -20,10 +20,10 @@ fs = 16;
 
 %% Animation
 
-for k = 1:NT
+for k = 1:NT-1
 
     figure(2)
-    set(gcf,'Position',[103 3 1151 673]);
+    % set(gcf,'Position',[103 3 1151 673]);
     
     subplot(3,3,1)
     cla
