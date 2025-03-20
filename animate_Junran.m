@@ -1,5 +1,8 @@
 %% Animate Doyle-Fuller-Newman Model Results
 %   Created May 12, 2016 by Scott Moura
+% Author: Junran Chen
+% Date: 2024-May-15
+% Function: Main function to use GA indentify EMs parameters
 %
 %   This m-file plots an animation of the solid and electrolyte
 %   concentrations (top and bottom), respectively. The middle frame plots

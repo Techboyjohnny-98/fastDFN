@@ -1,8 +1,6 @@
-%% Doyle-Fuller-Newman Model
-%   Published June 14, 2016 by Professor Scott Moura
-%   Energy, Controls, and Applications Lab (eCAL)
-%   University of California, Berkeley
-%   http://ecal.berkeley.edu/
+% Author: Junran Chen
+% Date: 2024-May-15
+% Function: Main function to use GA indentify EMs parameters
 load("May21_10_100_0p357.mat") 
 Opt_Param = x;
 
@@ -63,18 +61,18 @@ Delta_cn = cn_high-cn_low;
 Delta_cp = cp_low-cp_high;
 p.OneC = min(p.epsilon_s_n*p.L_n*Delta_cn*p.Faraday/3600, p.epsilon_s_p*p.L_p*Delta_cp*p.Faraday/3600);
 %% 1C_disch profile
-load('data/Samsung30T_1C_disch.mat');
-volt_exp = meas.Voltage(1:3000,1);
-time_exp = meas.Time(1:3000,1);
-current_exp = meas.Current(1:3000,1);
-temp_exp = meas.Battery_temp_DegC(1:3000,1);
-I = -current_exp'/p.Area;
-t = time_exp';
-volt_exp = volt_exp(1:10:end);
-I = I(1:10:end);
-t = t(1:10:end);
-p.delta_t = t(2)-t(1);
-V0 = 4.1552;
+% load('data/Samsung30T_1C_disch.mat');
+% volt_exp = meas.Voltage(1:3000,1);
+% time_exp = meas.Time(1:3000,1);
+% current_exp = meas.Current(1:3000,1);
+% temp_exp = meas.Battery_temp_DegC(1:3000,1);
+% I = -current_exp'/p.Area;
+% t = time_exp';
+% volt_exp = volt_exp(1:10:end);
+% I = I(1:10:end);
+% t = t(1:10:end);
+% p.delta_t = t(2)-t(1);
+% V0 = 4.1552;
 %% HWFET (training)
 % load('data/Samsung30T_driveCycle.mat');
 % volt_exp = meas.Voltage(12500:17641,1);
@@ -119,18 +117,19 @@ V0 = 4.1552;
 % p.delta_t = t(2)-t(1);
 % V0 = volt_exp(1);
 %% US06
-% load('data/Samsung30T_driveCycle.mat');
-% volt_exp = meas.Voltage(27802:29693,1);
-% time_exp = meas.Time(27802:29693,1);
-% current_exp = meas.Current(27802:29693,1);
-% temp_exp = meas.Battery_temp_DegC(27802:29693,1);
-% I = -current_exp'/p.Area;
-% t = time_exp';
-% p.delta_t = t(2)-t(1);
-% V0 = volt_exp(1);
+load('data/Samsung30T_driveCycle.mat');
+volt_exp = meas.Voltage(27802:29693,1);
+time_exp = meas.Time(27802:29693,1);
+current_exp = meas.Current(27802:29693,1);
+temp_exp = meas.Battery_temp_DegC(27802:29693,1);
+I = -current_exp'/p.Area;
+t = time_exp';
+p.delta_t = t(2)-t(1);
+V0 = volt_exp(1);
 
 figure
 plot(t, I);
+ylim([-20, 25])
 ylabel('Current (A)');
 xlabel('Time (s)');
 

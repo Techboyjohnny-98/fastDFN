@@ -1,8 +1,6 @@
-%% Doyle-Fuller-Newman Model
-%   Published June 14, 2016 by Professor Scott Moura
-%   Energy, Controls, and Applications Lab (eCAL)
-%   University of California, Berkeley
-%   http://ecal.berkeley.edu/
+% Author: Junran Chen
+% Date: 2024-May-15
+% Function: Main function to use GA indentify EMs parameters
 function [OBJ] = Junran_DFN(Opt_Param)
 
 %disp('Fast DFN')
